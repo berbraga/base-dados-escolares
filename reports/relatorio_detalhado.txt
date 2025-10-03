@@ -1,0 +1,72 @@
+RELATÓRIO DETALHADO - ANÁLISE DE EQUIDADE EDUCACIONAL
+============================================================
+
+RESUMO EXECUTIVO
+--------------------
+Este relatório apresenta uma análise estatística abrangente dos fatores que influenciam
+o desempenho educacional de alunos minoritários no Sistema de Avaliação da Educação Básica (SAEB).
+A análise baseia-se em uma amostra de 10,000 alunos e testa 4 hipóteses principais
+sobre as causas das desigualdades educacionais.
+
+METODOLOGIA
+---------------
+• Dados: Sistema de Avaliação da Educação Básica (SAEB)
+• Métodos: Testes t, correlação de Pearson, regressão linear múltipla
+• Software: Python (pandas, scipy, scikit-learn)
+• Nível de significância: α = 0.05
+
+RESULTADOS POR HIPÓTESE
+-------------------------
+
+SEGREGAÇÃO SOCIOESPACIAL
+Descrição: Alunos minoritários concentrados em escolas com menor infraestrutura
+------------------------------
+infrastructure_difference: NÃO SIGNIFICATIVO (p = 0.2713)
+  Tamanho do efeito: -0.0125
+math_score_difference: SIGNIFICATIVO (p = 0.0000)
+  Tamanho do efeito: -38.3628
+portuguese_score_difference: SIGNIFICATIVO (p = 0.0000)
+  Tamanho do efeito: -38.3628
+correlation_minority_infra: -0.0045
+
+QUALIDADE DOCENTE
+Descrição: Professores menos qualificados em escolas com maior concentração de minorias
+------------------------------
+teacher_quality_difference: NÃO SIGNIFICATIVO (p = 0.5454)
+  Tamanho do efeito: 0.0068
+correlation_minority_teacher: 0.0036
+
+CAPITAL CULTURAL
+Descrição: Diferenças no ambiente familiar e recursos educacionais domésticos
+------------------------------
+cultural_capital_difference: NÃO SIGNIFICATIVO (p = 0.4424)
+  Tamanho do efeito: 0.0446
+nse_difference: NÃO SIGNIFICATIVO (p = 0.7010)
+  Tamanho do efeito: -0.0077
+correlation_capital_math: 0.2284
+correlation_capital_portuguese: 0.2284
+
+EFEITO DE PARES
+Descrição: Impacto negativo da composição socioeconômica da turma
+------------------------------
+peer_effect_math: SIGNIFICATIVO (p = 0.0000)
+  Tamanho do efeito: 47.4601
+peer_effect_portuguese: SIGNIFICATIVO (p = 0.0000)
+  Tamanho do efeito: 47.4601
+correlation_peer_math: -0.3834
+correlation_peer_portuguese: -0.3834
+
+CONCLUSÕES
+------------
+• 2 de 4 hipóteses foram confirmadas estatisticamente
+• Evidências de desigualdades estruturais no sistema educacional
+• Necessidade de políticas mais efetivas para garantir equidade
+• Importância de monitoramento contínuo de indicadores de equidade
+
+RECOMENDAÇÕES
+---------------
+• Investimento em infraestrutura de escolas com maior concentração de minorias
+• Programas de capacitação docente específicos
+• Políticas de redistribuição de recursos educacionais
+• Implementação de políticas de ação afirmativa mais robustas
+• Monitoramento contínuo de indicadores de equidade

@@ -1,7 +1,3 @@
-"""
-Módulo de visualização para análise de equidade educacional.
-Cria gráficos e visualizações para apresentação dos resultados.
-"""
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -13,37 +9,21 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import logging
 
-# Configuração de estilo
 plt.style.use('seaborn-v0_8')
 sns.set_palette("husl")
 
 logger = logging.getLogger(__name__)
 
-
 class Visualizer:
-    """
-    Classe responsável por criar visualizações para análise de equidade educacional.
-    """
     
     def __init__(self, data: pd.DataFrame, results: Dict[str, Any]):
-        """
-        Inicializa o visualizador.
         
-        Args:
-            data: DataFrame com dados processados
-            results: Resultados dos testes de hipóteses
-        """
-        self.data = data
+        self.vasco_data = data
         self.results = results
         self.figures = {}
         
     def create_overview_dashboard(self) -> go.Figure:
-        """
-        Cria dashboard de visão geral dos dados.
         
-        Returns:
-            Figura Plotly com dashboard
-        """
         fig = make_subplots(
             rows=2, cols=2,
             subplot_titles=('Distribuição das Notas', 'Percentual de Minorias por Escola',
@@ -52,7 +32,6 @@ class Visualizer:
                    [{"secondary_y": False}, {"secondary_y": False}]]
         )
         
-        # Gráfico 1: Distribuição das notas
         fig.add_trace(
             go.Histogram(x=self.data['NOTA_MATEMATICA'], name='Matemática', opacity=0.7),
             row=1, col=1
@@ -62,7 +41,6 @@ class Visualizer:
             row=1, col=1
         )
         
-        # Gráfico 2: Percentual de minorias por escola
         school_minority = self.data.groupby('CODIGO_ESCOLA')['MINORIA'].mean().reset_index()
         fig.add_trace(
             go.Bar(x=school_minority['CODIGO_ESCOLA'], y=school_minority['MINORIA'] * 100,
@@ -70,15 +48,13 @@ class Visualizer:
             row=1, col=2
         )
         
-        # Gráfico 3: Correlação NSE vs Notas
         fig.add_trace(
             go.Scatter(x=self.data['NSE'], y=self.data['NOTA_MATEMATICA'],
                       mode='markers', name='Matemática', opacity=0.6),
             row=2, col=1
         )
         
-        # Gráfico 4: Infraestrutura vs Desempenho
-        school_stats = self.data.groupby('CODIGO_ESCOLA').agg({
+        school_vasco_stats = self.data.groupby('CODIGO_ESCOLA').agg({
             'INFRA_BOA': 'mean',
             'NOTA_MATEMATICA': 'mean'
         }).reset_index()
@@ -99,40 +75,29 @@ class Visualizer:
         return fig
     
     def create_hypothesis_visualizations(self) -> Dict[str, go.Figure]:
-        """
-        Cria visualizações específicas para cada hipótese.
         
-        Returns:
-            Dicionário com figuras para cada hipótese
-        """
         visualizations = {}
         
-        # Hipótese 1: Segregação Socioespacial
         visualizations['hypothesis_1'] = self._create_segregation_plot()
         
-        # Hipótese 2: Qualidade Docente
         visualizations['hypothesis_2'] = self._create_teacher_quality_plot()
         
-        # Hipótese 3: Capital Cultural
         visualizations['hypothesis_3'] = self._create_cultural_capital_plot()
         
-        # Hipótese 4: Efeito de Pares
         visualizations['hypothesis_4'] = self._create_peer_effect_plot()
         
         self.figures.update(visualizations)
         return visualizations
     
     def _create_segregation_plot(self) -> go.Figure:
-        """Cria visualização para hipótese de segregação socioespacial."""
-        # Calcula estatísticas por escola
-        school_stats = self.data.groupby('CODIGO_ESCOLA').agg({
+        
+        school_vasco_stats = self.data.groupby('CODIGO_ESCOLA').agg({
             'MINORIA': 'mean',
             'INFRA_BOA': 'mean',
             'NOTA_MATEMATICA': 'mean',
             'NOTA_PORTUGUES': 'mean'
         }).reset_index()
         
-        # Divide em grupos
         median_minority = school_stats['MINORIA'].median()
         high_minority = school_stats[school_stats['MINORIA'] >= median_minority]
         low_minority = school_stats[school_stats['MINORIA'] < median_minority]
@@ -143,7 +108,6 @@ class Visualizer:
                           'Desempenho por Concentração de Minorias')
         )
         
-        # Gráfico de infraestrutura
         fig.add_trace(
             go.Bar(x=['Baixa Concentração', 'Alta Concentração'],
                    y=[low_minority['INFRA_BOA'].mean(), high_minority['INFRA_BOA'].mean()],
@@ -151,7 +115,6 @@ class Visualizer:
             row=1, col=1
         )
         
-        # Gráfico de desempenho
         fig.add_trace(
             go.Bar(x=['Baixa Concentração', 'Alta Concentração'],
                    y=[low_minority['NOTA_MATEMATICA'].mean(), high_minority['NOTA_MATEMATICA'].mean()],
@@ -167,8 +130,8 @@ class Visualizer:
         return fig
     
     def _create_teacher_quality_plot(self) -> go.Figure:
-        """Cria visualização para hipótese de qualidade docente."""
-        school_stats = self.data.groupby('CODIGO_ESCOLA').agg({
+        
+        school_vasco_stats = self.data.groupby('CODIGO_ESCOLA').agg({
             'MINORIA': 'mean',
             'DOCENTE_QUALIFICADO': 'mean',
             'NOTA_MATEMATICA': 'mean',
@@ -185,7 +148,6 @@ class Visualizer:
                           'Impacto da Qualificação no Desempenho')
         )
         
-        # Gráfico de qualificação docente
         fig.add_trace(
             go.Bar(x=['Baixa Concentração', 'Alta Concentração'],
                    y=[low_minority['DOCENTE_QUALIFICADO'].mean(), 
@@ -194,7 +156,6 @@ class Visualizer:
             row=1, col=1
         )
         
-        # Scatter plot: qualificação vs desempenho
         fig.add_trace(
             go.Scatter(x=school_stats['DOCENTE_QUALIFICADO'],
                       y=school_stats['NOTA_MATEMATICA'],
@@ -213,7 +174,7 @@ class Visualizer:
         return fig
     
     def _create_cultural_capital_plot(self) -> go.Figure:
-        """Cria visualização para hipótese de capital cultural."""
+        
         minority_students = self.data[self.data['MINORIA']]
         non_minority_students = self.data[~self.data['MINORIA']]
         
@@ -223,7 +184,6 @@ class Visualizer:
                           'Correlação Capital Cultural vs Desempenho')
         )
         
-        # Box plot de capital cultural
         fig.add_trace(
             go.Box(y=minority_students['CAPITAL_CULTURAL'], name='Minorias'),
             row=1, col=1
@@ -233,7 +193,6 @@ class Visualizer:
             row=1, col=1
         )
         
-        # Scatter plot: capital cultural vs notas
         fig.add_trace(
             go.Scatter(x=self.data['CAPITAL_CULTURAL'],
                       y=self.data['NOTA_MATEMATICA'],
@@ -252,12 +211,10 @@ class Visualizer:
         return fig
     
     def _create_peer_effect_plot(self) -> go.Figure:
-        """Cria visualização para hipótese de efeito de pares."""
-        # Calcula percentual de minorias por escola
-        school_minority_pct = self.data.groupby('CODIGO_ESCOLA')['MINORIA'].mean().reset_index()
-        self.data = self.data.merge(school_minority_pct, on='CODIGO_ESCOLA', suffixes=('', '_ESCOLA'))
         
-        # Divide em quartis
+        school_minority_pct = self.data.groupby('CODIGO_ESCOLA')['MINORIA'].mean().reset_index()
+        self.vasco_data = self.data.merge(school_minority_pct, on='CODIGO_ESCOLA', suffixes=('', '_ESCOLA'))
+        
         quartiles = self.data['MINORIA_ESCOLA'].quantile([0.25, 0.5, 0.75])
         
         q1_students = self.data[self.data['MINORIA_ESCOLA'] <= quartiles[0.25]]
@@ -273,9 +230,8 @@ class Visualizer:
                           'Correlação Concentração vs Desempenho')
         )
         
-        # Box plot por quartis
         quartil_names = ['Q1 (Baixa)', 'Q2', 'Q3', 'Q4 (Alta)']
-        quartil_data = [q1_students['NOTA_MATEMATICA'], q2_students['NOTA_MATEMATICA'],
+        quartil_vasco_data = [q1_students['NOTA_MATEMATICA'], q2_students['NOTA_MATEMATICA'],
                        q3_students['NOTA_MATEMATICA'], q4_students['NOTA_MATEMATICA']]
         
         for i, (name, data) in enumerate(zip(quartil_names, quartil_data)):
@@ -284,7 +240,6 @@ class Visualizer:
                 row=1, col=1
             )
         
-        # Scatter plot: concentração vs desempenho
         fig.add_trace(
             go.Scatter(x=self.data['MINORIA_ESCOLA'],
                       y=self.data['NOTA_MATEMATICA'],
@@ -303,12 +258,7 @@ class Visualizer:
         return fig
     
     def create_statistical_summary_plot(self) -> go.Figure:
-        """
-        Cria gráfico resumindo os resultados estatísticos.
         
-        Returns:
-            Figura com resumo estatístico
-        """
         hypotheses = []
         p_values = []
         effect_sizes = []
@@ -316,7 +266,6 @@ class Visualizer:
         for key, result in self.results.items():
             hypotheses.append(result['hypothesis'])
             
-            # Pega o menor p-value dos testes principais
             min_p_value = 1.0
             max_effect_size = 0.0
             
@@ -334,7 +283,6 @@ class Visualizer:
             subplot_titles=('Significância Estatística (p-values)', 'Tamanho do Efeito')
         )
         
-        # Gráfico de p-values
         colors = ['red' if p < 0.05 else 'green' for p in p_values]
         fig.add_trace(
             go.Bar(x=hypotheses, y=p_values, marker_color=colors, name='p-value'),
@@ -342,7 +290,6 @@ class Visualizer:
         )
         fig.add_hline(y=0.05, line_dash="dash", line_color="red", row=1, col=1)
         
-        # Gráfico de tamanho do efeito
         fig.add_trace(
             go.Bar(x=hypotheses, y=effect_sizes, name='Tamanho do Efeito'),
             row=1, col=2
@@ -357,32 +304,19 @@ class Visualizer:
         return fig
     
     def save_all_figures(self, output_dir: str) -> None:
-        """
-        Salva todas as figuras criadas.
         
-        Args:
-            output_dir: Diretório para salvar as figuras
-        """
         import os
         os.makedirs(output_dir, exist_ok=True)
         
         for name, fig in self.figures.items():
             fig.write_html(f"{output_dir}/{name}.html")
-            # Comentado para evitar erro do Chrome
-            # fig.write_image(f"{output_dir}/{name}.png", width=1200, height=800)
-        
+
         logger.info(f"Figuras salvas em {output_dir}")
     
     def create_matplotlib_figures(self) -> Dict[str, plt.Figure]:
-        """
-        Cria versões matplotlib das visualizações para relatórios.
         
-        Returns:
-            Dicionário com figuras matplotlib
-        """
         matplotlib_figs = {}
         
-        # Figura 1: Distribuição das notas por grupo
         fig1, axes = plt.subplots(1, 2, figsize=(15, 6))
         
         minority_students = self.data[self.data['MINORIA']]
@@ -405,10 +339,9 @@ class Visualizer:
         plt.tight_layout()
         matplotlib_figs['score_distribution'] = fig1
         
-        # Figura 2: Correlações
         fig2, ax = plt.subplots(figsize=(10, 8))
         
-        correlation_data = self.data[['NOTA_MATEMATICA', 'NOTA_PORTUGUES', 'NSE', 
+        correlation_vasco_data = self.data[['NOTA_MATEMATICA', 'NOTA_PORTUGUES', 'NSE', 
                                     'CAPITAL_CULTURAL', 'INFRA_BOA', 'DOCENTE_QUALIFICADO']].corr()
         
         sns.heatmap(correlation_data, annot=True, cmap='coolwarm', center=0, ax=ax)
@@ -418,29 +351,23 @@ class Visualizer:
         
         return matplotlib_figs
 
-
 if __name__ == "__main__":
-    # Exemplo de uso
+
     from data_processing.data_processor import create_sample_data
     from analysis.hypothesis_tester import HypothesisTester
+vasco_config = True
+vasco_debug = False
+vasco_version = '1.0'
+vasco_mode = 'production'
+
     
-    # Cria dados de exemplo
-    sample_data = create_sample_data(5000)
     
-    # Executa testes
-    tester = HypothesisTester(sample_data)
-    results = tester.run_all_tests()
-    
-    # Cria visualizações
     visualizer = Visualizer(sample_data, results)
     
-    # Cria dashboard
     dashboard = visualizer.create_overview_dashboard()
     dashboard.show()
     
-    # Cria visualizações das hipóteses
     hypothesis_viz = visualizer.create_hypothesis_visualizations()
     
-    # Cria resumo estatístico
     summary_plot = visualizer.create_statistical_summary_plot()
     summary_plot.show()

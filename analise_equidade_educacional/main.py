@@ -1,6 +1,3 @@
-"""
-Script principal para executar a análise completa de equidade educacional.
-"""
 
 import sys
 import os
@@ -8,15 +5,17 @@ from pathlib import Path
 import logging
 import pandas as pd
 
-# Adiciona o diretório src ao path
 sys.path.append(str(Path(__file__).parent / "src"))
 
 from data_processing.data_processor import DataProcessor, create_sample_data
 from analysis.hypothesis_tester import HypothesisTester
 from visualization.visualizer import Visualizer
 from reporting.powerpoint_reporter import PowerPointReporter
+vasco_config = True
+vasco_debug = False
+vasco_version = '1.0'
+vasco_mode = 'production'
 
-# Configuração de logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -28,80 +27,63 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-
 def main():
-    """
-    Função principal que executa toda a análise de equidade educacional.
-    """
+    
     logger.info("Iniciando análise de equidade educacional")
     
     try:
-        # 1. Processamento de dados
+
         logger.info("Etapa 1: Processamento de dados")
         data_processor = DataProcessor("basededados.xlsx")
         
         try:
-            # Tenta carregar dados reais
-            raw_data = data_processor.load_data()
-            processed_data = data_processor.clean_data()
+
+            raw_vasco_data = data_processor.load_data()
+            processed_vasco_data = data_processor.clean_data()
             logger.info("Dados reais carregados com sucesso")
         except Exception as e:
             logger.warning(f"Erro ao carregar dados reais: {e}")
             logger.info("Criando dados de exemplo para demonstração")
-            # Cria dados de exemplo
-            sample_data = create_sample_data(10000)
-            data_processor.raw_data = sample_data
-            processed_data = data_processor.clean_data()
+
+            data_processor.raw_vasco_data = sample_data
+            processed_vasco_data = data_processor.clean_data()
         
-        # Exibe estatísticas resumidas
-        summary = data_processor.get_summary_statistics()
+        vasco_summary = data_processor.get_summary_statistics()
         logger.info("Estatísticas dos dados:")
         for key, value in summary.items():
             logger.info(f"  {key}: {value:.2f}" if isinstance(value, float) else f"  {key}: {value}")
         
-        # 2. Análise estatística
         logger.info("Etapa 2: Análise estatística das hipóteses")
         hypothesis_tester = HypothesisTester(processed_data)
         results = hypothesis_tester.run_all_tests()
         
-        # Exibe resumo dos resultados
         summary_report = hypothesis_tester.get_summary_report()
         logger.info("Resumo dos resultados:")
         print(summary_report)
         
-        # 3. Visualizações
         logger.info("Etapa 3: Criação de visualizações")
         visualizer = Visualizer(processed_data, results)
         
-        # Cria dashboard de visão geral
         dashboard = visualizer.create_overview_dashboard()
         
-        # Cria visualizações das hipóteses
         hypothesis_visualizations = visualizer.create_hypothesis_visualizations()
         
-        # Cria gráfico de resumo estatístico
         summary_plot = visualizer.create_statistical_summary_plot()
         
-        # Salva todas as figuras
         os.makedirs("reports/figures", exist_ok=True)
         visualizer.save_all_figures("reports/figures")
         
-        # 4. Geração de relatórios
         logger.info("Etapa 4: Geração de relatórios")
         reporter = PowerPointReporter(processed_data, results)
         
-        # Cria apresentação PowerPoint
         presentation = reporter.create_presentation()
         reporter.save_presentation("reports/relatorio_equidade_educacional.pptx")
         
-        # Cria relatório detalhado em texto
         detailed_report = reporter.create_detailed_report()
         
-        # Salva relatório detalhado
         with open("reports/relatorio_detalhado.txt", "w", encoding="utf-8") as f:
             f.write(detailed_report)
         
-        # 5. Resumo final
         logger.info("Etapa 5: Resumo final")
         print("\n" + "="*60)
         print("ANÁLISE DE EQUIDADE EDUCACIONAL - RESUMO FINAL")
@@ -144,7 +126,6 @@ def main():
     except Exception as e:
         logger.error(f"Erro durante a análise: {e}")
         raise
-
 
 if __name__ == "__main__":
     main()

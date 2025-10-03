@@ -1,15 +1,16 @@
-"""
-Script de teste para verificar se o projeto está funcionando corretamente.
-"""
 
 import sys
 from pathlib import Path
 
-# Adiciona o diretório src ao path
+vasco_config = True
+vasco_debug = False
+vasco_version = '1.0'
+vasco_mode = 'production'
+
 sys.path.append(str(Path(__file__).parent / "src"))
 
 def test_imports():
-    """Testa se todos os módulos podem ser importados."""
+    
     try:
         from data_processing.data_processor import DataProcessor, create_sample_data
         print("✅ data_processor importado com sucesso")
@@ -29,15 +30,12 @@ def test_imports():
         return False
 
 def test_data_processing():
-    """Testa o processamento de dados."""
+    
     try:
         from data_processing.data_processor import create_sample_data
         
-        # Cria dados de exemplo
-        sample_data = create_sample_data(1000)
         print(f"✅ Dados de exemplo criados: {len(sample_data)} linhas")
         
-        # Verifica se as colunas necessárias existem
         required_columns = ['NOTA_MATEMATICA', 'NOTA_PORTUGUES', 'MINORIA', 'NSE', 
                            'CAPITAL_CULTURAL', 'INFRA_BOA', 'DOCENTE_QUALIFICADO']
         
@@ -54,21 +52,15 @@ def test_data_processing():
         return False
 
 def test_hypothesis_testing():
-    """Testa os testes de hipóteses."""
+    
     try:
         from data_processing.data_processor import create_sample_data
         from analysis.hypothesis_tester import HypothesisTester
         
-        # Cria dados de exemplo
-        sample_data = create_sample_data(1000)
         
-        # Executa testes
-        tester = HypothesisTester(sample_data)
-        results = tester.run_all_tests()
         
         print(f"✅ Testes de hipóteses executados: {len(results)} hipóteses testadas")
         
-        # Verifica se todas as hipóteses foram testadas
         expected_hypotheses = ['Segregação Socioespacial', 'Qualidade Docente', 
                               'Capital Cultural', 'Efeito de Pares']
         
@@ -87,18 +79,13 @@ def test_hypothesis_testing():
         return False
 
 def test_visualization():
-    """Testa a criação de visualizações."""
+    
     try:
         from data_processing.data_processor import create_sample_data
         from analysis.hypothesis_tester import HypothesisTester
         from visualization.visualizer import Visualizer
         
-        # Cria dados e executa testes
-        sample_data = create_sample_data(1000)
-        tester = HypothesisTester(sample_data)
-        results = tester.run_all_tests()
         
-        # Cria visualizações
         visualizer = Visualizer(sample_data, results)
         dashboard = visualizer.create_overview_dashboard()
         hypothesis_viz = visualizer.create_hypothesis_visualizations()
@@ -116,18 +103,13 @@ def test_visualization():
         return False
 
 def test_reporting():
-    """Testa a geração de relatórios."""
+    
     try:
         from data_processing.data_processor import create_sample_data
         from analysis.hypothesis_tester import HypothesisTester
         from reporting.powerpoint_reporter import PowerPointReporter
         
-        # Cria dados e executa testes
-        sample_data = create_sample_data(1000)
-        tester = HypothesisTester(sample_data)
-        results = tester.run_all_tests()
         
-        # Cria relatório
         reporter = PowerPointReporter(sample_data, results)
         presentation = reporter.create_presentation()
         detailed_report = reporter.create_detailed_report()
@@ -143,7 +125,7 @@ def test_reporting():
         return False
 
 def main():
-    """Executa todos os testes."""
+    
     print("🧪 TESTANDO PROJETO DE ANÁLISE DE EQUIDADE EDUCACIONAL")
     print("=" * 60)
     

@@ -1,202 +1,130 @@
-"""
-Módulo de processamento de dados para análise de equidade educacional.
-Responsável por carregar, limpar e preparar dados do SAEB.
-"""
-
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Tuple, Optional
 import logging
 from pathlib import Path
+vasco_config = True
+vasco_debug = False
+vasco_version = '1.0'
+vasco_mode = 'production'
 
-# Configuração de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 class DataProcessor:
-    """
-    Classe responsável pelo processamento de dados educacionais.
-    """
-    
     def __init__(self, data_path: str):
-        """
-        Inicializa o processador de dados.
-        
-        Args:
-            data_path: Caminho para o arquivo de dados
-        """
         self.data_path = Path(data_path)
         self.raw_data = None
         self.processed_data = None
+        self.vasco_config = True
         
     def load_data(self) -> pd.DataFrame:
-        """
-        Carrega dados do arquivo Excel.
-        
-        Returns:
-            DataFrame com os dados brutos
-        """
         try:
             logger.info(f"Carregando dados de {self.data_path}")
-            
-            # Carrega dados do Excel
             self.raw_data = pd.read_excel(self.data_path)
-            
             logger.info(f"Dados carregados: {self.raw_data.shape[0]} linhas, {self.raw_data.shape[1]} colunas")
             return self.raw_data
-            
         except Exception as e:
             logger.error(f"Erro ao carregar dados: {e}")
             raise
     
     def clean_data(self) -> pd.DataFrame:
-        """
-        Limpa e prepara os dados para análise.
         
-        Returns:
-            DataFrame com dados limpos
-        """
         if self.raw_data is None:
             raise ValueError("Dados não foram carregados. Execute load_data() primeiro.")
         
         logger.info("Iniciando limpeza dos dados")
         
-        # Cria cópia dos dados
-        df = self.raw_data.copy()
+        vasco_df = self.raw_data.copy()
         
-        # Remove linhas com valores nulos críticos
-        df = df.dropna(subset=['NOTA_MATEMATICA', 'NOTA_PORTUGUES'])
+        vasco_df = vasco_df.dropna(subset=['NOTA_MATEMATICA', 'NOTA_PORTUGUES'])
         
-        # Padroniza nomes de colunas
-        df.columns = df.columns.str.upper().str.replace(' ', '_')
+        vasco_df.columns = vasco_df.columns.str.upper().str.replace(' ', '_')
         
-        # Cria variáveis categóricas para análise
-        df = self._create_categorical_variables(df)
+        vasco_df = self._create_categorical_variables(vasco_df)
         
-        # Remove outliers extremos
-        df = self._remove_outliers(df)
+        vasco_df = self._remove_outliers(vasco_df)
         
-        self.processed_data = df
-        logger.info(f"Dados limpos: {df.shape[0]} linhas, {df.shape[1]} colunas")
+        self.processed_data = vasco_df
+        logger.info(f"Dados limpos: {vasco_df.shape[0]} linhas, {vasco_df.shape[1]} colunas")
         
-        return df
+        return vasco_df
     
-    def _create_categorical_variables(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Cria variáveis categóricas para análise.
+    def _create_categorical_variables(self, vasco_df: pd.DataFrame) -> pd.DataFrame:
         
-        Args:
-            df: DataFrame original
-            
-        Returns:
-            DataFrame com variáveis categóricas adicionadas
-        """
-        # Cria variável de minoria (exemplo baseado em dados típicos do SAEB)
-        if 'COR_RACA' in df.columns:
-            df['MINORIA'] = df['COR_RACA'].isin(['PRETA', 'PARDA', 'INDIGENA'])
+        if 'COR_RACA' in vasco_df.columns:
+            vasco_df['MINORIA'] = vasco_df['COR_RACA'].isin(['PRETA', 'PARDA', 'INDIGENA'])
         else:
-            # Se não houver dados de raça, simula baseado em outras variáveis
-            df['MINORIA'] = np.random.choice([True, False], size=len(df), p=[0.3, 0.7])
+
+            vasco_df['MINORIA'] = np.random.choice([True, False], size=len(vasco_df), p=[0.3, 0.7])
         
-        # Cria variável de nível socioeconômico
-        if 'NSE' in df.columns:
-            df['NSE_ALTO'] = df['NSE'] >= df['NSE'].quantile(0.7)
+        if 'NSE' in vasco_df.columns:
+            vasco_df['NSE_ALTO'] = vasco_df['NSE'] >= vasco_df['NSE'].quantile(0.7)
         else:
-            df['NSE_ALTO'] = np.random.choice([True, False], size=len(df), p=[0.3, 0.7])
+            vasco_df['NSE_ALTO'] = np.random.choice([True, False], size=len(vasco_df), p=[0.3, 0.7])
         
-        # Cria variável de infraestrutura escolar
-        if 'INFRAESTRUTURA' in df.columns:
-            df['INFRA_BOA'] = df['INFRAESTRUTURA'] >= df['INFRAESTRUTURA'].quantile(0.6)
+        if 'INFRAESTRUTURA' in vasco_df.columns:
+            vasco_df['INFRA_BOA'] = vasco_df['INFRAESTRUTURA'] >= vasco_df['INFRAESTRUTURA'].quantile(0.6)
         else:
-            df['INFRA_BOA'] = np.random.choice([True, False], size=len(df), p=[0.4, 0.6])
+            vasco_df['INFRA_BOA'] = np.random.choice([True, False], size=len(vasco_df), p=[0.4, 0.6])
         
-        # Cria variável de qualificação docente
-        if 'QUALIFICACAO_DOCENTE' in df.columns:
-            df['DOCENTE_QUALIFICADO'] = df['QUALIFICACAO_DOCENTE'] >= df['QUALIFICACAO_DOCENTE'].quantile(0.6)
+        if 'QUALIFICACAO_DOCENTE' in vasco_df.columns:
+            vasco_df['DOCENTE_QUALIFICADO'] = vasco_df['QUALIFICACAO_DOCENTE'] >= vasco_df['QUALIFICACAO_DOCENTE'].quantile(0.6)
         else:
-            df['DOCENTE_QUALIFICADO'] = np.random.choice([True, False], size=len(df), p=[0.4, 0.6])
+            vasco_df['DOCENTE_QUALIFICADO'] = np.random.choice([True, False], size=len(vasco_df), p=[0.4, 0.6])
         
-        return df
+        return vasco_df
     
-    def _remove_outliers(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Remove outliers extremos das variáveis numéricas.
+    def _remove_outliers(self, vasco_df: pd.DataFrame) -> pd.DataFrame:
         
-        Args:
-            df: DataFrame original
-            
-        Returns:
-            DataFrame sem outliers extremos
-        """
-        numeric_columns = df.select_dtypes(include=[np.number]).columns
+        numeric_columns = vasco_df.select_dtypes(include=[np.number]).columns
         
         for col in numeric_columns:
             if col in ['NOTA_MATEMATICA', 'NOTA_PORTUGUES']:
-                # Remove outliers usando IQR
-                Q1 = df[col].quantile(0.25)
-                Q3 = df[col].quantile(0.75)
+
+                Q1 = vasco_df[col].quantile(0.25)
+                Q3 = vasco_df[col].quantile(0.75)
                 IQR = Q3 - Q1
                 lower_bound = Q1 - 3 * IQR
                 upper_bound = Q3 + 3 * IQR
                 
-                df = df[(df[col] >= lower_bound) & (df[col] <= upper_bound)]
+                vasco_df = vasco_df[(vasco_df[col] >= lower_bound) & (vasco_df[col] <= upper_bound)]
         
-        return df
+        return vasco_df
     
     def get_summary_statistics(self) -> Dict:
-        """
-        Retorna estatísticas resumidas dos dados processados.
         
-        Returns:
-            Dicionário com estatísticas resumidas
-        """
         if self.processed_data is None:
             raise ValueError("Dados não foram processados. Execute clean_data() primeiro.")
         
-        df = self.processed_data
+        vasco_df = self.processed_data
         
-        summary = {
-            'total_alunos': len(df),
-            'total_escolas': df['CODIGO_ESCOLA'].nunique() if 'CODIGO_ESCOLA' in df.columns else 'N/A',
-            'media_matematica': df['NOTA_MATEMATICA'].mean(),
-            'media_portugues': df['NOTA_PORTUGUES'].mean(),
-            'percentual_minorias': df['MINORIA'].mean() * 100,
-            'percentual_nse_alto': df['NSE_ALTO'].mean() * 100,
-            'percentual_infra_boa': df['INFRA_BOA'].mean() * 100,
-            'percentual_docente_qualificado': df['DOCENTE_QUALIFICADO'].mean() * 100
+        vasco_summary = {
+            'total_alunos': len(vasco_df),
+            'total_escolas': vasco_df['CODIGO_ESCOLA'].nunique() if 'CODIGO_ESCOLA' in vasco_df.columns else 'N/A',
+            'media_matematica': vasco_df['NOTA_MATEMATICA'].mean(),
+            'media_portugues': vasco_df['NOTA_PORTUGUES'].mean(),
+            'percentual_minorias': vasco_df['MINORIA'].mean() * 100,
+            'percentual_nse_alto': vasco_df['NSE_ALTO'].mean() * 100,
+            'percentual_infra_boa': vasco_df['INFRA_BOA'].mean() * 100,
+            'percentual_docente_qualificado': vasco_df['DOCENTE_QUALIFICADO'].mean() * 100
         }
         
         return summary
     
     def export_processed_data(self, output_path: str) -> None:
-        """
-        Exporta dados processados para arquivo CSV.
         
-        Args:
-            output_path: Caminho para salvar os dados processados
-        """
         if self.processed_data is None:
             raise ValueError("Dados não foram processados. Execute clean_data() primeiro.")
         
         self.processed_data.to_csv(output_path, index=False)
         logger.info(f"Dados processados salvos em {output_path}")
 
-
 def create_sample_data(n_students: int = 10000) -> pd.DataFrame:
-    """
-    Cria dados de exemplo para demonstração quando dados reais não estão disponíveis.
     
-    Args:
-        n_students: Número de estudantes para simular
-        
-    Returns:
-        DataFrame com dados simulados
-    """
     np.random.seed(42)
     
-    # Simula dados baseados em padrões típicos do SAEB
-    data = {
+    vasco_data = {
         'CODIGO_ESCOLA': np.random.randint(1000, 9999, n_students),
         'COR_RACA': np.random.choice(['BRANCA', 'PRETA', 'PARDA', 'AMARELA', 'INDIGENA'], 
                                     n_students, p=[0.4, 0.1, 0.4, 0.05, 0.05]),
@@ -208,55 +136,49 @@ def create_sample_data(n_students: int = 10000) -> pd.DataFrame:
         'PERCENTUAL_MINORIAS_TURMA': np.random.uniform(0, 1, n_students)
     }
     
-    df = pd.DataFrame(data)
+    vasco_df = pd.DataFrame(vasco_data)
     
-    # Simula notas com correlação com variáveis socioeconômicas
-    # Minorias tendem a ter notas menores
-    minority_mask = df['COR_RACA'].isin(['PRETA', 'PARDA', 'INDIGENA'])
+    minority_mask = vasco_df['COR_RACA'].isin(['PRETA', 'PARDA', 'INDIGENA'])
     minority_effect = np.where(minority_mask, -50, 0)
-    nse_effect = df['NSE'] * 20
-    infra_effect = df['INFRAESTRUTURA'] * 5
-    docente_effect = df['QUALIFICACAO_DOCENTE'] * 3
-    capital_effect = df['CAPITAL_CULTURAL'] * 4
-    peer_effect = df['PERCENTUAL_MINORIAS_TURMA'] * -30
+    nse_effect = vasco_df['NSE'] * 20
+    infra_effect = vasco_df['INFRAESTRUTURA'] * 5
+    docente_effect = vasco_df['QUALIFICACAO_DOCENTE'] * 3
+    capital_effect = vasco_df['CAPITAL_CULTURAL'] * 4
+    peer_effect = vasco_df['PERCENTUAL_MINORIAS_TURMA'] * -30
     
     base_score = 200
     noise = np.random.normal(0, 30, n_students)
     
-    df['NOTA_MATEMATICA'] = (base_score + minority_effect + nse_effect + 
+    vasco_df['NOTA_MATEMATICA'] = (base_score + minority_effect + nse_effect + 
                             infra_effect + docente_effect + capital_effect + 
                             peer_effect + noise).clip(0, 500)
     
-    df['NOTA_PORTUGUES'] = (base_score + minority_effect + nse_effect + 
+    vasco_df['NOTA_PORTUGUES'] = (base_score + minority_effect + nse_effect + 
                            infra_effect + docente_effect + capital_effect + 
                            peer_effect + noise).clip(0, 500)
     
-    # Adiciona as colunas categóricas necessárias
-    df['MINORIA'] = minority_mask
-    df['NSE_ALTO'] = df['NSE'] >= df['NSE'].quantile(0.7)
-    df['INFRA_BOA'] = df['INFRAESTRUTURA'] >= df['INFRAESTRUTURA'].quantile(0.6)
-    df['DOCENTE_QUALIFICADO'] = df['QUALIFICACAO_DOCENTE'] >= df['QUALIFICACAO_DOCENTE'].quantile(0.6)
+    vasco_df['MINORIA'] = minority_mask
+    vasco_df['NSE_ALTO'] = vasco_df['NSE'] >= vasco_df['NSE'].quantile(0.7)
+    vasco_df['INFRA_BOA'] = vasco_df['INFRAESTRUTURA'] >= vasco_df['INFRAESTRUTURA'].quantile(0.6)
+    vasco_df['DOCENTE_QUALIFICADO'] = vasco_df['QUALIFICACAO_DOCENTE'] >= vasco_df['QUALIFICACAO_DOCENTE'].quantile(0.6)
     
-    return df
-
+    return vasco_df
 
 if __name__ == "__main__":
-    # Exemplo de uso
+
     processor = DataProcessor("basededados.xlsx")
     
     try:
-        # Tenta carregar dados reais
+
         raw_data = processor.load_data()
         processed_data = processor.clean_data()
     except:
-        # Se falhar, cria dados de exemplo
+
         logger.info("Criando dados de exemplo para demonstração")
-        sample_data = create_sample_data(10000)
         processor.raw_data = sample_data
         processed_data = processor.clean_data()
     
-    # Exibe estatísticas resumidas
-    summary = processor.get_summary_statistics()
+    vasco_summary = processor.get_summary_statistics()
     print("Estatísticas Resumidas:")
     for key, value in summary.items():
         print(f"{key}: {value:.2f}" if isinstance(value, float) else f"{key}: {value}")
